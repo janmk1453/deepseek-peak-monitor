@@ -1,0 +1,28 @@
+{
+  "name": "deepseek-monitor",
+  "version": "1.0.0",
+  "description": "Edge浏览器插件 - 监控DeepSeek API峰谷时间和余额",
+  "main": "server.py",
+  "scripts": {
+    "start": "python server.py",
+    "start:3000": "python server.py 3000",
+    "start:8080": "python server.py 8080",
+    "test": "python test-server.py",
+    "test:3000": "python test-server.py 3000",
+    "test:8080": "python test-server.py 8080",
+    "demo": "python demo.py",
+    "generate-icons": "node generate-icons.js"
+  },
+  "keywords": [
+    "deepseek",
+    "edge-extension",
+    "browser-extension",
+    "api-monitor"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

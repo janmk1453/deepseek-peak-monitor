@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeepSeek 峰谷监控</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">DS</div>
+        <div>
+          <h1>DeepSeek 峰谷监控</h1>
+          <p class="subtitle">峰谷监控</p>
+        </div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="enabled" checked>
+        <span class="slider"></span>
+      </label>
+    </header>
+
+    <!-- Live preview -->
+    <div class="preview" id="status-card">
+      <div class="preview-main">
+        <span class="preview-badge" id="status-badge">--</span>
+        <span class="preview-time" id="current-time">--:--</span>
+      </div>
+      <div class="preview-balance" id="balance-value">--</div>
+    </div>
+
+    <!-- Target sites -->
+    <section class="card">
+      <div class="card-head">
+        <span class="card-title">生效网站</span>
+        <span class="card-hint">悬浮窗仅在这些网站显示</span>
+      </div>
+      <div class="url-list" id="url-list"></div>
+      <div class="url-add">
+        <input type="text" id="new-url" placeholder="例如 http://127.0.0.1:3080/">
+        <button id="add-url-btn" class="btn-add" title="添加">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- API & Settings -->
+    <section class="card">
+      <label class="field">
+        <span class="field-label">API Key</span>
+        <div class="input-wrap">
+          <input type="password" id="api-key" placeholder="sk-..." spellcheck="false">
+          <button class="eye-btn" id="toggle-eye" type="button" title="显示/隐藏">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <span class="field-hint">用于查询余额，未打开目标网站时不会请求</span>
+      </label>
+      <label class="field">
+        <span class="field-label">刷新间隔（秒）</span>
+        <input type="number" id="refresh-interval" min="10" max="3600" value="60">
+      </label>
+    </section>
+
+    <!-- Peak config -->
+    <section class="card">
+      <div class="card-head">
+        <span class="card-title">峰谷时间</span>
+        <span class="card-hint">高峰为红色，其余为绿色</span>
+      </div>
+      <div class="weekdays" id="weekdays">
+        <button data-day="1" class="wd">一</button>
+        <button data-day="2" class="wd">二</button>
+        <button data-day="3" class="wd">三</button>
+        <button data-day="4" class="wd">四</button>
+        <button data-day="5" class="wd">五</button>
+        <button data-day="6" class="wd">六</button>
+        <button data-day="0" class="wd">日</button>
+      </div>
+      <div class="period-list" id="period-list"></div>
+      <button class="btn-add-period" id="add-period-btn">+ 添加时段</button>
+      <label class="field" style="margin-top:10px">
+        <span class="field-label">高峰前预警（分钟）</span>
+        <input type="number" id="warning-minutes" min="0" max="60" value="10">
+      </label>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <button id="refresh-btn" class="btn ghost">刷新</button>
+      <button id="save-btn" class="btn primary">保存</button>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

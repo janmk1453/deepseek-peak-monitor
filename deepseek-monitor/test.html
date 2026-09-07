@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeepSeek Monitor 测试</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 32px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+    
+    h1 {
+      color: #1f2937;
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    
+    .subtitle {
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    
+    .status-demo {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .status-demo h3 {
+      color: #374151;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    
+    .status-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .status-color {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+    }
+    
+    .status-color.red {
+      background: rgba(239, 68, 68, 0.85);
+    }
+    
+    .status-color.yellow {
+      background: rgba(245, 158, 11, 0.85);
+    }
+    
+    .status-color.green {
+      background: rgba(34, 197, 94, 0.85);
+    }
+    
+    .status-text {
+      font-size: 13px;
+      color: #374151;
+    }
+    
+    .instructions {
+      background: #fef3c7;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: left;
+    }
+    
+    .instructions h3 {
+      color: #92400e;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    
+    .instructions ol {
+      color: #78350f;
+      font-size: 13px;
+      line-height: 1.7;
+      padding-left: 18px;
+    }
+    
+    .instructions code {
+      background: rgba(0, 0, 0, 0.1);
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    
+    .footer {
+      margin-top: 20px;
+      color: #9ca3af;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>DeepSeek Monitor</h1>
+    <p class="subtitle">安装插件后，页面右上角将显示监控浮窗</p>
+    
+    <div class="status-demo">
+      <h3>状态颜色说明</h3>
+      <div class="status-row">
+        <div class="status-color red"></div>
+        <span class="status-text">高峰时段 (周一至周五 9:00-12:00, 14:00-18:00)</span>
+      </div>
+      <div class="status-row">
+        <div class="status-color yellow"></div>
+        <span class="status-text">高峰开始前10分钟</span>
+      </div>
+      <div class="status-row">
+        <div class="status-color green"></div>
+        <span class="status-text">空闲时段 (其余时间)</span>
+      </div>
+    </div>
+    
+    <div class="instructions">
+      <h3>安装步骤</h3>
+      <ol>
+        <li>打开Edge浏览器，访问 <code>edge://extensions/</code></li>
+        <li>开启右上角的"开发人员模式"</li>
+        <li>点击"加载解压缩的扩展"</li>
+        <li>选择 <code>deepseek-monitor</code> 文件夹</li>
+        <li>刷新此页面</li>
+      </ol>
+    </div>
+    
+    <div class="footer">
+      <p>基于北京时间 (UTC+8) 计算峰谷时段</p>
+    </div>
+  </div>
+</body>
+</html>
