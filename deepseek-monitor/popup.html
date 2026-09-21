@@ -82,6 +82,16 @@
       </div>
       <div class="period-list" id="period-list"></div>
       <button class="btn-add-period" id="add-period-btn">+ 添加时段</button>
+      <label class="check-row" style="margin-top:10px">
+        <input type="checkbox" id="respect-holidays" checked>
+        <span>按中国法定节假日调整</span>
+      </label>
+      <span class="field-hint">开启后：法定节假日、周末（含调休上班的周末）全天按空闲计费</span>
+      <label class="field" style="margin-top:10px">
+        <span class="field-label">额外空闲日期（可选）</span>
+        <textarea id="custom-off-days" rows="2" placeholder="2027-01-01 ~ 2027-01-03&#10;每行一个日期或区间，用于未收录年份"></textarea>
+        <span class="field-hint" id="holiday-coverage-hint"></span>
+      </label>
       <label class="field" style="margin-top:10px">
         <span class="field-label">高峰前预警（分钟）</span>
         <input type="number" id="warning-minutes" min="0" max="60" value="10">
@@ -94,6 +104,7 @@
       <button id="save-btn" class="btn primary">保存</button>
     </footer>
   </div>
+  <script src="holidays.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

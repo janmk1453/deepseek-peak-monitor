@@ -58,7 +58,7 @@
 ## 文件修改
 
 ### content.js
-- 添加了 `calculateCountdown()` 函数计算倒计时
+- 倒计时改由 `holidays.js` 的 `DS_PEAK.getCountdown()` 统一计算
 - 更新了 `updateMonitor()` 函数设置背景颜色
 - 添加了 `startCountdown()` 函数每秒更新倒计时
 

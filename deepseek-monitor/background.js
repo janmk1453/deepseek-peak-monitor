@@ -1,4 +1,6 @@
 // Background service worker
+importScripts('holidays.js');
+
 const ALARM_NAME = 'deepseek-monitor-check';
 
 // Default settings
@@ -7,18 +9,14 @@ const DEFAULT_SETTINGS = {
   refreshInterval: 60,
   apiKey: '',
   enabled: true,
-  peakPeriods: [
-    { start: '09:00', end: '12:00' },
-    { start: '14:00', end: '18:00' }
-  ],
-  peakWeekdays: [1, 2, 3, 4, 5],
-  warningMinutes: 10
+  peakPeriods: DS_PEAK.DEFAULT_PEAK_PERIODS.map(p => ({ start: p.start, end: p.end })),
+  peakWeekdays: DS_PEAK.DEFAULT_PEAK_WEEKDAYS.slice(),
+  warningMinutes: DS_PEAK.DEFAULT_WARNING_MINUTES,
+  // 官方新规则：法定节假日全天、周末（含调休上班）按空闲时段计费
+  respectChinaHolidays: true,
+  // 手动补充的额外空闲日期（YYYY-MM-DD），用于未收录年份或临时调整
+  customOffDays: []
 };
-
-function parseTime(str) {
-  const [h, m] = str.split(':').map(Number);
-  return h * 60 + m;
-}
 
 // Initialize
 chrome.runtime.onInstalled.addListener(() => {
@@ -36,6 +34,8 @@ chrome.runtime.onInstalled.addListener(() => {
       if (!s.peakPeriods) { s.peakPeriods = DEFAULT_SETTINGS.peakPeriods; migrated = true; }
       if (!s.peakWeekdays) { s.peakWeekdays = DEFAULT_SETTINGS.peakWeekdays; migrated = true; }
       if (s.warningMinutes === undefined) { s.warningMinutes = DEFAULT_SETTINGS.warningMinutes; migrated = true; }
+      if (s.respectChinaHolidays === undefined) { s.respectChinaHolidays = DEFAULT_SETTINGS.respectChinaHolidays; migrated = true; }
+      if (!Array.isArray(s.customOffDays)) { s.customOffDays = []; migrated = true; }
       if (migrated) chrome.storage.local.set({ settings: s });
     }
   });
@@ -53,80 +53,16 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-// Calculate peak/off-peak status based on local system time
+// 峰谷状态统一由 holidays.js 计算，避免与 content 脚本出现两套算法
 function getTimeStatus(settings) {
-  const now = new Date();
-  
-  const day = now.getDay();
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
-  
-  const peakPeriods = (settings && settings.peakPeriods) || DEFAULT_SETTINGS.peakPeriods;
-  const peakWeekdays = (settings && settings.peakWeekdays) || DEFAULT_SETTINGS.peakWeekdays;
-  const warningMinutes = (settings && settings.warningMinutes) ?? DEFAULT_SETTINGS.warningMinutes;
-  
-  const periods = peakPeriods.map(p => ({
-    start: parseTime(p.start),
-    end: parseTime(p.end)
-  })).filter(p => p.end > p.start).sort((a,b) => a.start - b.start);
-  
-  const isPeakDay = peakWeekdays.includes(day);
-  const totalMinutes = hours * 60 + minutes;
-  
-  let status = 'off-peak';
-  let nextPeakStart = null;
-  
-  if (isPeakDay && periods.length) {
-    // Check peak
-    for (const p of periods) {
-      if (totalMinutes >= p.start && totalMinutes < p.end) {
-        status = 'peak';
-        break;
-      }
-    }
-    // Check warning
-    if (status !== 'peak') {
-      for (const p of periods) {
-        if (totalMinutes >= p.start - warningMinutes && totalMinutes < p.start) {
-          status = 'warning';
-          nextPeakStart = p.start;
-          break;
-        }
-      }
-    }
-    // Next peak
-    if (!nextPeakStart) {
-      for (const p of periods) {
-        if (totalMinutes < p.start) { nextPeakStart = p.start; break; }
-      }
-      if (!nextPeakStart) {
-        // Check future weekdays
-        for (let d = 1; d <= 7; d++) {
-          const nd = (day + d) % 7;
-          if (peakWeekdays.includes(nd)) {
-            nextPeakStart = d * 24 * 60 + periods[0].start;
-            break;
-          }
-        }
-      }
-    }
-  } else {
-    // Off day - next peak on next peak weekday
-    for (let d = 1; d <= 7; d++) {
-      const nd = (day + d) % 7;
-      if (peakWeekdays.includes(nd) && periods.length) {
-        nextPeakStart = d * 24 * 60 + periods[0].start;
-        break;
-      }
-    }
-  }
-  
-  return {
-    status,
-    nextPeakStart,
-    currentTime: now.toLocaleTimeString('zh-CN', { hour12: false }),
-    currentDate: now.toLocaleDateString('zh-CN')
-  };
+  return DS_PEAK.getTimeStatus({
+    now: new Date(),
+    peakPeriods: settings && settings.peakPeriods,
+    peakWeekdays: settings && settings.peakWeekdays,
+    warningMinutes: settings && settings.warningMinutes,
+    respectChinaHolidays: settings && settings.respectChinaHolidays,
+    customOffDays: settings && settings.customOffDays
+  });
 }
 
 // Fetch balance from DeepSeek API
@@ -231,6 +167,8 @@ async function checkAndNotify() {
     peakPeriods: settings.peakPeriods || DEFAULT_SETTINGS.peakPeriods,
     peakWeekdays: settings.peakWeekdays || DEFAULT_SETTINGS.peakWeekdays,
     warningMinutes: settings.warningMinutes ?? DEFAULT_SETTINGS.warningMinutes,
+    respectChinaHolidays: settings.respectChinaHolidays !== false,
+    customOffDays: Array.isArray(settings.customOffDays) ? settings.customOffDays : [],
     balance: balanceData ? balanceData.balance : null,
     balanceError: balanceData ? balanceData.error : null,
     currency: balanceData ? balanceData.currency : null,
@@ -283,7 +221,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           if (tab.url && isTargetUrl(tab.url, request.settings.targetUrls)) {
             chrome.scripting.executeScript({
               target: { tabId: tab.id },
-              files: ['content.js']
+              files: ['holidays.js', 'content.js']
             }).catch(() => {});
             chrome.scripting.insertCSS({
               target: { tabId: tab.id },

@@ -4,9 +4,12 @@
   position: fixed;
   top: 14px;
   right: 14px;
+  width: max-content;
   z-index: 999999;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
   user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
 }
 
 .ds-widget {
@@ -25,6 +28,9 @@
   cursor: grab;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .ds-widget:active {

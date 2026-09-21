@@ -6,6 +6,7 @@
 1. **manifest.json** - 插件配置文件
    - 定义插件名称、版本、权限
    - 配置后台脚本、内容脚本
+   - 内容脚本按 holidays.js → content.js 顺序注入
    - 设置图标和弹出页面
 
 2. **background.js** - 后台服务脚本
@@ -46,7 +47,17 @@
    - icon48.png - 48x48图标
    - icon128.png - 128x128图标
 
+### 共享算法
+- **holidays.js** - 峰谷与节假日判定共享模块
+  - 内置国务院公布的放假安排（2023-2026 年）
+  - 高峰/空闲、下一个高峰、倒计时统一出口
+  - background / content / popup 共用，避免多处算法漂移
+
 ## 测试文件
+
+- **test-peak.js** - 峰谷与节假日回归测试（不参与扩展加载）
+  - `node test-peak.js` 运行
+  - 覆盖春节、国庆、调休上班周末、倒计时等 34 项用例
 
 10. **test.html** - 测试页面
     - 展示插件功能
@@ -122,10 +133,12 @@
 ### 核心功能文件
 - **manifest.json**: 插件的"身份证"，定义所有配置
 - **background.js**: 插件的"大脑"，处理后台逻辑
+- **holidays.js**: 插件的"日历与判据"，统一峰谷和节假日计算
 - **content.js**: 插件的"眼睛"，在页面中显示
 - **content.css**: 插件的"衣服"，美化界面
 
 ### 测试文件
+- **test-peak.js**: 峰谷判断的"体检表"
 - **test.html**: 测试插件的"舞台"
 - **test-server.py**: 模拟API的"演员"
 - **demo.py**: 快速演示的"导演"
@@ -142,6 +155,7 @@
 核心文件:
   manifest.json      ~1KB
   background.js      ~5KB
+  holidays.js        ~12KB
   content.js         ~8KB
   content.css        ~6KB
   popup.html         ~3KB
@@ -149,6 +163,7 @@
   popup.js           ~3KB
 
 测试文件:
+  test-peak.js       ~6KB
   test.html          ~4KB
   server.py          ~1KB
   test-server.py     ~2KB
@@ -179,9 +194,11 @@
 
 ```
 manifest.json
+  ├── holidays.js
   ├── background.js
   │   └── (Chrome API)
   ├── content.js
+  │   ├── (依赖 holidays.js)
   │   └── content.css
   ├── popup.html
   │   ├── popup.css

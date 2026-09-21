@@ -51,9 +51,11 @@ function loadSettings() {
       refreshInterval: 60,
       apiKey: '',
       enabled: true,
-      peakPeriods: [{start:'09:00',end:'12:00'},{start:'14:00',end:'18:00'}],
-      peakWeekdays: [1,2,3,4,5],
-      warningMinutes: 10
+      peakPeriods: DS_PEAK.DEFAULT_PEAK_PERIODS.map(p => ({ start: p.start, end: p.end })),
+      peakWeekdays: DS_PEAK.DEFAULT_PEAK_WEEKDAYS.slice(),
+      warningMinutes: DS_PEAK.DEFAULT_WARNING_MINUTES,
+      respectChinaHolidays: true,
+      customOffDays: []
     };
     const settings = result.settings || defaults;
     
@@ -73,11 +75,30 @@ function loadSettings() {
     document.getElementById('refresh-interval').value = settings.refreshInterval ?? 60;
     document.getElementById('enabled').checked = settings.enabled ?? true;
     document.getElementById('warning-minutes').value = settings.warningMinutes ?? 10;
+    document.getElementById('respect-holidays').checked = settings.respectChinaHolidays !== false;
+    document.getElementById('custom-off-days').value = DS_PEAK.formatOffDaysText(
+      Array.isArray(settings.customOffDays) ? settings.customOffDays : []
+    );
+    updateCoverageHint();
   });
 }
 
+function updateCoverageHint() {
+  const hint = document.getElementById('holiday-coverage-hint');
+  if (!hint) return;
+  const info = DS_PEAK.getCoverageInfo(new Date());
+  const range = info.years[0] + '-' + info.years[info.years.length - 1];
+  hint.textContent = info.message || `已内置 ${range} 年国务院公布的放假安排`;
+}
+
 function loadStatus() {
+  // 先显示已有快照，再强制刷新一次，保证节假日/峰谷状态是最新的
   chrome.runtime.sendMessage({ type: 'GET_MONITOR_DATA' }, (response) => {
+    if (response) {
+      updateStatusDisplay(response);
+    }
+  });
+  chrome.runtime.sendMessage({ type: 'FORCE_REFRESH' }, (response) => {
     if (response) {
       updateStatusDisplay(response);
     }
@@ -107,7 +128,9 @@ function updateStatusDisplay(data) {
     default:
       statusCard.classList.add('offpeak');
       statusBadge.classList.add('offpeak');
-      statusBadge.textContent = '空闲时段';
+      if (data.isHoliday) statusBadge.textContent = `空闲 · ${data.holidayName}`;
+      else if (data.isMakeupWorkday) statusBadge.textContent = '空闲 · 调休上班';
+      else statusBadge.textContent = '空闲时段';
       break;
   }
   
@@ -222,6 +245,12 @@ function saveSettings() {
     if (peakPeriods[i]) peakPeriods[i][k] = inp.value;
   });
 
+  const offDays = DS_PEAK.parseOffDaysText(document.getElementById('custom-off-days').value);
+  if (offDays.invalid.length) {
+    alert('额外空闲日期格式有误：' + offDays.invalid.join('、') + '\n请使用 YYYY-MM-DD 或 YYYY-MM-DD ~ YYYY-MM-DD');
+    return;
+  }
+
   const settings = {
     targetUrls: targetUrls,
     apiKey: document.getElementById('api-key').value,
@@ -229,7 +258,9 @@ function saveSettings() {
     enabled: document.getElementById('enabled').checked,
     peakPeriods: peakPeriods.filter(p => p.start && p.end && p.start !== p.end),
     peakWeekdays: peakWeekdays,
-    warningMinutes: parseInt(document.getElementById('warning-minutes').value) || 0
+    warningMinutes: parseInt(document.getElementById('warning-minutes').value) || 0,
+    respectChinaHolidays: document.getElementById('respect-holidays').checked,
+    customOffDays: offDays.days
   };
   
   for (const url of settings.targetUrls) {
